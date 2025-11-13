@@ -2,8 +2,24 @@ import pandas as pd
 import numpy as np
 from abc import ABC, abstractmethod
 
+class Process:
+    def __init__(self,id,arrival,total_time,priority,deadline,num_pages):
+        self.id = id
+        self.arrival = arrival
+        self.priority = priority
+        self.deadline = deadline
+        self.num_pages = num_pages
+
+        self.remaining_time = total_time
+        self.state = 'novo'
+
+        self.vruntime = 0.0
+
+        self.wait_time = 0
+        self.turnaround_time = 0
+        self.finish_time = -1
 class Algorithms:
-    def __init__(self,quantum,overheat,disk_cost,process_list):
+    def __init__(self,quantum: int,overheat: int,disk_cost: int,process_list: list[Process]):
 
         self.quantum = quantum
         self.overheat = overheat
@@ -24,13 +40,42 @@ class Algorithms:
     @abstractmethod
     def execute(self):
         pass
+from typing import List
 
+# ... (Definições das classes Process e Algorithms omitidas para concisão) ...
 
 class Fifo(Algorithms):
-    def __init__(self):
+  
+    def __init__(self, quantum: int, overheat: int, disk_cost: int, process_list: List['Process']):
     
-    def execute(self):
+        super().__init__(quantum, overheat, disk_cost, process_list)
 
+    def execute(self) -> None:
+        
+        self.ready_queue = sorted(self.process_list, key=lambda p: p.arrival)
+        
+        while self.ready_queue:
+            process = self.ready_queue.pop(0) 
+
+            if self.actual_time < process.arrival:
+                self.idle_cpu += (process.arrival - self.actual_time)
+                self.actual_time = process.arrival
+           
+            start_time = self.actual_time
+            
+            self.actual_time += process.remaining_time 
+            
+            process.remaining_time = 0
+            process.finish_time = self.actual_time
+            process.state = 'finalizado'
+
+            process.turnaround_time = process.finish_time - process.arrival
+
+            process.wait_time = start_time - process.arrival
+
+            self.finished_process.append(process)
+            
+        print("Simulação FIFO concluída. Tempo total de CPU:", self.actual_time)
 class Sjf(Algorithms):
      def __init__(self):
     
@@ -52,21 +97,5 @@ class CFS_Sim(Algorithms):
     def execute(self):
 
 
-class Process:
-    def __init__(self,id,arrival,total_time,priority,deadline,num_pages):
-        self.id = id
-        self.arrival = arrival
-        self.total_time = total_time
-        self.priority = priority
-        self.deadline = deadline
-        self.num_pages = num_pages
 
-        self.remaining_time = total_time
-        self.state = 'novo'
-
-        self.vruntime = 0.0
-
-        self.wait_time = 0
-        self.turnaround_time = 0
-        self.finish_time = -1
 
