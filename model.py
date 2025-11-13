@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from abc import ABC, abstractmethod
-
+from typing import List
 class Process:
     def __init__(self,id,arrival,total_time,priority,deadline,num_pages):
         self.id = id
@@ -40,9 +40,6 @@ class Algorithms:
     @abstractmethod
     def execute(self):
         pass
-from typing import List
-
-# ... (Definições das classes Process e Algorithms omitidas para concisão) ...
 
 class Fifo(Algorithms):
   
@@ -51,7 +48,7 @@ class Fifo(Algorithms):
         super().__init__(quantum, overheat, disk_cost, process_list)
 
     def execute(self) -> None:
-        
+
         self.ready_queue = sorted(self.process_list, key=lambda p: p.arrival)
         
         while self.ready_queue:
@@ -77,9 +74,52 @@ class Fifo(Algorithms):
             
         print("Simulação FIFO concluída. Tempo total de CPU:", self.actual_time)
 class Sjf(Algorithms):
-     def __init__(self):
-    
-    def execute(self):
+    def __init__(self, quantum: int, overheat: int, disk_cost: int, process_list: List['Process']):
+        super().__init__(quantum, overheat, disk_cost, process_list)
+
+    def execute(self) -> None:
+        
+        num_total_processes = len(self.process_list)
+
+        while len(self.finished_process) < num_total_processes:
+            
+            available_processes = [
+                p for p in self.process_list 
+                if p.arrival <= self.actual_time and p.state != 'finalizado'
+            ]
+
+            if not available_processes:
+                try:
+                    next_arrival_time = min(
+                        p.arrival for p in self.process_list if p.state == 'novo'
+                    )
+                    self.idle_cpu += (next_arrival_time - self.actual_time)
+                    self.actual_time = next_arrival_time
+                except ValueError:
+                    break 
+                
+                continue 
+            
+            available_processes.sort(key=lambda p: p.remaining_time)
+            
+            process = available_processes[0] 
+            
+            process.state = 'em execução'
+            start_time = self.actual_time
+            
+            self.actual_time += process.remaining_time
+            
+            process.remaining_time = 0
+            process.finish_time = self.actual_time
+            process.state = 'finalizado'
+            
+            process.turnaround_time = process.finish_time - process.arrival
+            
+            process.wait_time = start_time - process.arrival
+
+            self.finished_process.append(process)
+
+        print(f"Simulação SJF concluída. Tempo total: {self.actual_time}")
 
 class Round_Robin(Algorithms):
      def __init__(self):
