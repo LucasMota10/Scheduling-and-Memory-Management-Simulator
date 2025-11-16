@@ -12,7 +12,9 @@ class Process:
         self.num_pages = num_pages
 
         self.remaining_time = total_time
+        self.total_time = total_time
         self.state = 'novo'
+        self.time_line=[]
 
         self.vruntime = 0.0
 
@@ -70,13 +72,18 @@ class Fifo(Algorithms):
 
             process.turnaround_time = process.finish_time - process.arrival
 
+            #criando a timeline
             process.wait_time = start_time - process.arrival
+            if(process.wait_time > 0):
+                process.time_line.append(TimeLine(process.wait_time, "waiting"))
+
+            process.time_line.append(TimeLine(process.turnaround_time-process.wait_time, "executing"))
 
             self.finished_process.append(process)
             
         print("Simulação FIFO concluída. Tempo total de CPU:", self.actual_time)
 
-class Sjf(Algorithms):
+class Sjf(Algorithms):  
     def __init__(self, quantum: int, overheat: int, disk_cost: int, process_list: List['Process']):
         super().__init__(quantum, overheat, disk_cost, process_list)
 
@@ -295,5 +302,10 @@ class CFS_Sim(Algorithms):
                 ready_rbtree.append(process)
 
         print(f"Simulação CFS concluída. Tempo total: {self.actual_time}")
+
+class TimeLine:
+    def __init__(self, duration, type):
+        self.duration = duration
+        self.type = type
 
 

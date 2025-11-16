@@ -1,0 +1,57 @@
+[
+    {
+        "id": "D",
+        "arrival": 3,
+        "priority": 2,
+        "deadline": 10,
+        "num_pages": 3,
+        "remaining_time": 5,
+        "total_time": 5,
+        "state": "novo",
+        "vruntime": 0.0,
+        "wait_time": 0,
+        "turnaround_time": 0,
+        "finish_time": -1
+    },
+    {
+        "id": "C",
+        "arrival": 4,
+        "priority": 2,
+        "num_pages": 3,
+        "remaining_time": 5,
+        "total_time": 5,
+        "state": "novo",
+        "vruntime": 0.0,
+        "wait_time": 0,
+        "turnaround_time": 0,
+        "finish_time": -1
+    },
+    {
+        "id": "B",
+        "arrival": 2,
+        "priority": 2,
+        "deadline": 10,
+        "num_pages": 3,
+        "total_time": 5,
+        "remaining_time": 5,
+        "state": "novo",
+        "vruntime": 0.0,
+        "wait_time": 0,
+        "turnaround_time": 0,
+        "finish_time": -1
+    },
+    {
+        "id": "A",
+        "arrival": 1,
+        "priority": 2,
+        "deadline": 10,
+        "num_pages": 3,
+        "total_time": 5,
+        "remaining_time": 5,
+        "state": "novo",
+        "vruntime": 0.0,
+        "wait_time": 0,
+        "turnaround_time": 0,
+        "finish_time": -1
+    }
+]
