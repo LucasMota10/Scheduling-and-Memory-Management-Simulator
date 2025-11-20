@@ -147,6 +147,28 @@ class SimulatorGUI(tk.Tk):
                      values=["FIFO", "SJF", "Round Robin", "EDF", "CFS"],
                      width=20).pack(side="left")
 
+        params = ttk.Frame(self)
+        params.pack(fill="x", padx=10, pady=(0,10))
+
+        # Quantum
+        ttk.Label(params, text="Quantum:").pack(side="left", padx=(0,4))
+        self.quantum_var = tk.StringVar(value="2")
+        self.quantum_spin = tk.Spinbox(params, from_=0, to=1000, textvariable=self.quantum_var, width=5)
+        self.quantum_spin.pack(side="left", padx=(0,15))
+
+        # Overheat
+        ttk.Label(params, text="Overheat:").pack(side="left", padx=(0,4))
+        self.overheat_var = tk.StringVar(value="1")
+        self.overheat_spin = tk.Spinbox(params, from_=0, to=1000, textvariable=self.overheat_var, width=5)
+        self.overheat_spin.pack(side="left", padx=(0,15))
+
+        # Disk Cost
+        ttk.Label(params, text="Disk Cost:").pack(side="left", padx=(0,4))
+        self.disk_var = tk.StringVar(value="0")
+        self.disk_spin = tk.Spinbox(params, from_=0, to=1000, textvariable=self.disk_var, width=5)
+        self.disk_spin.pack(side="left")
+
+
         ttk.Button(top, text="Executar", command=self.run_simulation).pack(side="left", padx=10)
 
         self.graph_frame = ttk.Frame(self)
@@ -171,17 +193,20 @@ class SimulatorGUI(tk.Tk):
 
         alg = self.alg_var.get()
 
-        # instancia o algoritmo selecionado
+        quantum = int(self.quantum_var.get())
+        overheat =int(self.overheat_var.get())
+        disk_cost = int(self.disk_var.get())
+
         if alg == "FIFO":
-            executor = Fifo(0, 0, 0, procs)
+            executor = Fifo(quantum, overheat, disk_cost, procs)
         elif alg == "SJF":
-            executor = Sjf(0, 0, 0, procs)
+            executor = Sjf(quantum, overheat, disk_cost, procs)
         elif alg == "Round Robin":
-            executor = Round_Robin(quantum=2, overheat=1, disk_cost=0, process_list=procs)
+            executor = Round_Robin(quantum, overheat, disk_cost, procs)
         elif alg == "EDF":
-            executor = EDF(0,0,0,procs)
+            executor = EDF(quantum, overheat, disk_cost, procs)
         elif alg == "CFS":
-            executor = CFS_Sim(quantum=2, overheat=1, disk_cost=0, process_list=procs)
+            executor = CFS_Sim(quantum, overheat, disk_cost, procs)
 
         executor.execute()
 
