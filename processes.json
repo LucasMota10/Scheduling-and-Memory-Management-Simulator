@@ -53,5 +53,21 @@
         "wait_time": 0,
         "turnaround_time": 0,
         "finish_time": -1
+    },
+    {
+        "id": "E",
+        "arrival": 1,
+        "priority": 1,
+        "deadline": null,
+        "num_pages": 1,
+        "remaining_time": 1,
+        "total_time": 1,
+        "state": "novo",
+        "time_line": [],
+        "vruntime": 0.0,
+        "last_active_time": 1,
+        "wait_time": 0,
+        "turnaround_time": 0,
+        "finish_time": -1
     }
 ]
