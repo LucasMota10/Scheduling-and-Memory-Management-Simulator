@@ -35,7 +35,6 @@ def select_color(state_type: str) -> str:
         return "blue"
     if state_type == "overhead":
         return "red"
-    #TODO: fazer com que fique cinza caso passe da deadline
     return "gray"
 
 #Função que monta o gráfico de Gantt
@@ -72,10 +71,10 @@ def build_gantt(alg):
             if end > max_time:
                 max_time = end
 
-        # desenha linha de deadline
-        if p.deadline!=None:
+        # desenha linha de deadline ABSOLUTO
+        if p.absolute_deadline is not None:
             try:
-                dline = p.arrival + int(p.deadline)
+                dline = p.absolute_deadline
 
                 ax.axvline(
                     dline,
@@ -111,16 +110,13 @@ def build_gantt(alg):
 
     ax.invert_yaxis()
 
-    #grid para ajudar vizualização
-    #ax.grid(axis="x", color="#000000", linewidth=0.6, linestyle="--")
-
     fig.tight_layout()
 
     legend_elements = [
     Line2D([0], [0], color="green", lw=6, label="Executando"),
     Line2D([0], [0], color="blue", lw=6, label="Esperando"),
     Line2D([0], [0], color="red", lw=6, label="Overhead"),
-    Line2D([0], [0], color="brown", lw=2, linestyle="--", label="Deadline ID"),
+    Line2D([0], [0], color="brown", lw=2, linestyle="--", label="Deadline Absoluto"),
 ]
 
     ax.legend(handles=legend_elements, loc="upper right")
@@ -151,16 +147,16 @@ class SimulatorGUI(tk.Tk):
         params = ttk.Frame(self)
         params.pack(fill="x", padx=10, pady=(0,10))
 
-        # Quantum
+        # Quantum (MÍNIMO 1)
         ttk.Label(params, text="Quantum:").pack(side="left", padx=(0,4))
         self.quantum_var = tk.StringVar(value="2")
-        self.quantum_spin = tk.Spinbox(params, from_=0, to=1000, textvariable=self.quantum_var, width=5)
+        self.quantum_spin = tk.Spinbox(params, from_=1, to=1000, textvariable=self.quantum_var, width=5)
         self.quantum_spin.pack(side="left", padx=(0,15))
 
-        # Overheat
+        # Overheat (MÍNIMO 1)
         ttk.Label(params, text="Overheat:").pack(side="left", padx=(0,4))
         self.overheat_var = tk.StringVar(value="1")
-        self.overheat_spin = tk.Spinbox(params, from_=0, to=1000, textvariable=self.overheat_var, width=5)
+        self.overheat_spin = tk.Spinbox(params, from_=1, to=1000, textvariable=self.overheat_var, width=5)
         self.overheat_spin.pack(side="left", padx=(0,15))
 
         # Disk Cost
@@ -192,12 +188,22 @@ class SimulatorGUI(tk.Tk):
             messagebox.showerror("Erro", "Selecione um arquivo JSON.")
             return
 
+        try:
+            quantum = int(self.quantum_var.get())
+            overheat = int(self.overheat_var.get())
+            disk_cost = int(self.disk_var.get())
+        except ValueError:
+            messagebox.showerror("Erro", "Valores numéricos inválidos.")
+            return
+
+        # VALIDAÇÃO DE ENTRADA (MÍNIMO 1)
+        if quantum < 1 or overheat < 1:
+            messagebox.showerror("Erro", "Quantum e Overheat devem ser no mínimo 1.")
+            return
+
         procs = load_processes(file)
 
         alg = self.alg_var.get()
-        quantum = int(self.quantum_var.get())
-        overheat = int(self.overheat_var.get())
-        disk_cost = int(self.disk_var.get())
 
         if alg == "FIFO":
             executor = Fifo(quantum, overheat, disk_cost, procs)
@@ -224,7 +230,7 @@ class SimulatorGUI(tk.Tk):
         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
-
+    
         self.canvas_widget = canvas
 
         self._show_results(executor)
@@ -243,11 +249,12 @@ class SimulatorGUI(tk.Tk):
             turnaround = termino - p.arrival
             espera = turnaround - getattr(p, "total_time", p.remaining_time if hasattr(p, "remaining_time") else 0)
 
-            if getattr(p, "deadline", None) is None:
+            # Verifica deadline usando o tempo absoluto calculado no model
+            if p.absolute_deadline is None:
                 d_ok = True
             else:
                 try:
-                    d_ok = termino <= p.deadline
+                    d_ok = termino <= p.absolute_deadline
                 except Exception:
                     d_ok = False
 
@@ -255,7 +262,7 @@ class SimulatorGUI(tk.Tk):
                 "id": p.id,
                 "chegada": p.arrival,
                 "execucao": getattr(p, "total_time", None),
-                "deadline": getattr(p, "deadline", None),
+                "deadline": p.absolute_deadline, # Exibe o deadline absoluto
                 "prioridade": getattr(p, "priority", None),
                 "inicios": starts,
                 "termino": termino,
