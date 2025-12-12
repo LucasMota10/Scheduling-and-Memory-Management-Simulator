@@ -1,7 +1,7 @@
 [
     {
         "id": "A",
-        "arrival": 0,
+        "arrival": 1,
         "priority": 5,
         "deadline": 10,
         "num_pages": 3,
@@ -15,7 +15,7 @@
     },
     {
         "id": "B",
-        "arrival": 0,
+        "arrival": 2,
         "priority": 1,
         "num_pages": 3,
         "remaining_time": 5,
@@ -28,7 +28,7 @@
     },
     {
         "id": "C",
-        "arrival": 0,
+        "arrival": 5,
         "priority": 7,
         "deadline": 10,
         "num_pages": 3,
@@ -42,7 +42,7 @@
     },
     {
         "id": "D",
-        "arrival": 0,
+        "arrival": 3,
         "priority": 3,
         "deadline": 10,
         "num_pages": 3,
@@ -56,7 +56,7 @@
     },
     {
         "id": "E",
-        "arrival": 0,
+        "arrival": 2,
         "priority": 9,
         "deadline": null,
         "num_pages": 1,

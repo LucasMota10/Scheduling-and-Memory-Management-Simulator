@@ -270,6 +270,7 @@ class CFS_Sim(Algorithms):
 
         if upcoming_processes:
             if self.actual_time < upcoming_processes[0].arrival:
+                self.idle_cpu += upcoming_processes[0].arrival - self.actual_time
                 self.actual_time = upcoming_processes[0].arrival
         else:
             return 
