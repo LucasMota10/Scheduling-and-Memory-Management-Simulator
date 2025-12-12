@@ -38,7 +38,7 @@ def select_color(state_type: str) -> str:
     return "gray"
 
 #Função que monta o gráfico de Gantt
-def build_gantt(alg):
+def build_gantt(alg,gray_after_deadline: bool = False):
     fig = plt.Figure(figsize=(10, 5), dpi=100)
     ax = fig.add_subplot(111)
 
@@ -61,6 +61,19 @@ def build_gantt(alg):
             end = start + width
 
             color = select_color(stype)
+            if(gray_after_deadline and p.absolute_deadline!=None and p.absolute_deadline < end ):
+                width = p.absolute_deadline - start
+                if(width>0):
+                    ax.add_patch(patches.Rectangle(
+                        (start, y_pos[p.id]), width, 0.8,
+                        facecolor=color, edgecolor="black", alpha=0.9
+                    ))
+                    start += width
+                if(width<0):
+                    width=0
+                color = select_color("deadline")
+                width = float(duration) - width
+
 
             ax.add_patch(patches.Rectangle(
                 (start, y_pos[p.id]), width, 0.8,
@@ -116,6 +129,7 @@ def build_gantt(alg):
     Line2D([0], [0], color="green", lw=6, label="Executando"),
     Line2D([0], [0], color="blue", lw=6, label="Esperando"),
     Line2D([0], [0], color="red", lw=6, label="Overhead"),
+    Line2D([0], [0], color="grey", lw=6, label="Estouro de deadline"),
     Line2D([0], [0], color="brown", lw=2, linestyle="--", label="Deadline Absoluto"),
 ]
 
@@ -128,7 +142,7 @@ class SimulatorGUI(tk.Tk):
         super().__init__()
 
         self.title("Simulador de Escalonamento")
-        self.geometry("1100x720")
+        self.geometry("1300x800")
 
         top = ttk.Frame(self)
         top.pack(fill="x", padx=10, pady=10)
@@ -164,6 +178,9 @@ class SimulatorGUI(tk.Tk):
         self.disk_var = tk.StringVar(value="0")
         self.disk_spin = tk.Spinbox(params, from_=0, to=1000, textvariable=self.disk_var, width=5)
         self.disk_spin.pack(side="left")
+
+        self.gray_deadline_var = tk.BooleanVar(value=True)  # True por padrão se quiser ativo
+        ttk.Checkbutton(params, text="Cinza depois da deadline", variable=self.gray_deadline_var).pack(side="right", padx=(10,4))
 
         ttk.Button(top, text="Executar", command=self.run_simulation).pack(side="left", padx=10)
 
@@ -222,7 +239,7 @@ class SimulatorGUI(tk.Tk):
         executor.execute()
 
         # monta grafico de gantt
-        fig = build_gantt(executor)
+        fig = build_gantt(executor,gray_after_deadline=self.gray_deadline_var.get())
 
         if self.canvas_widget:
             self.canvas_widget.get_tk_widget().destroy()

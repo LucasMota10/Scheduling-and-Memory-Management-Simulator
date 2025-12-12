@@ -5,7 +5,7 @@ from typing import List
 class TimeLine:
     def __init__(self, duration, type):
         self.duration = duration
-        self.type = type # "waiting", "executing", "overhead"
+        self.type = type
 
 class Process:
     def __init__(self, id, arrival, total_time, priority, deadline, num_pages):
@@ -14,9 +14,6 @@ class Process:
         self.priority = priority
         self.num_pages = num_pages
 
-        # LÓGICA DE DEADLINE ALTERADA:
-        # O deadline informado é relativo (duração).
-        # O deadline absoluto é a Chegada + Duração.
         self.deadline_duration = deadline 
         if deadline is not None:
             self.absolute_deadline = arrival + deadline
@@ -27,14 +24,11 @@ class Process:
         self.total_time = total_time
         self.state = 'novo'
         
-        # Lista de eventos para o Gantt
         self.time_line = []
 
-        # Atributos de controle de execução
         self.vruntime = 0.0
         self.last_active_time = arrival 
 
-        # Métricas finais
         self.wait_time = 0
         self.turnaround_time = 0
         self.finish_time = -1
@@ -228,8 +222,6 @@ class EDF(Algorithms):
                     break 
                 continue 
             
-            # ALTERAÇÃO NO EDF: Ordena pelo Absolute Deadline (Chegada + Duração)
-            # Se não tiver deadline, vai para o final da fila (inf)
             available_processes.sort(key=lambda p: p.absolute_deadline if p.absolute_deadline is not None else float('inf'))
             
             process = available_processes[0] 
