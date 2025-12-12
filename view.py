@@ -9,7 +9,6 @@ from matplotlib.lines import Line2D
 
 from model import Fifo, Sjf, Round_Robin, EDF, CFS_Sim, Process
 
-# Carrega os processos do arquivo json
 def load_processes(path):
     with open(path, "r", encoding="utf-8") as f:
         raw = json.load(f)
@@ -37,7 +36,6 @@ def select_color(state_type: str) -> str:
         return "red"
     return "gray"
 
-#Função que monta o gráfico de Gantt
 def build_gantt(alg,gray_after_deadline: bool = False):
     fig = plt.Figure(figsize=(10, 5), dpi=100)
     ax = fig.add_subplot(111)
@@ -84,7 +82,6 @@ def build_gantt(alg,gray_after_deadline: bool = False):
             if end > max_time:
                 max_time = end
 
-        # desenha linha de deadline ABSOLUTO
         if p.absolute_deadline is not None:
             try:
                 dline = p.absolute_deadline
@@ -161,34 +158,29 @@ class SimulatorGUI(tk.Tk):
         params = ttk.Frame(self)
         params.pack(fill="x", padx=10, pady=(0,10))
 
-        # Quantum (MÍNIMO 1)
         ttk.Label(params, text="Quantum:").pack(side="left", padx=(0,4))
         self.quantum_var = tk.StringVar(value="2")
         self.quantum_spin = tk.Spinbox(params, from_=1, to=1000, textvariable=self.quantum_var, width=5)
         self.quantum_spin.pack(side="left", padx=(0,15))
 
-        # Overheat (MÍNIMO 1)
         ttk.Label(params, text="Overheat:").pack(side="left", padx=(0,4))
         self.overheat_var = tk.StringVar(value="1")
         self.overheat_spin = tk.Spinbox(params, from_=1, to=1000, textvariable=self.overheat_var, width=5)
         self.overheat_spin.pack(side="left", padx=(0,15))
 
-        # Disk Cost
         ttk.Label(params, text="Disk Cost:").pack(side="left", padx=(0,4))
         self.disk_var = tk.StringVar(value="0")
         self.disk_spin = tk.Spinbox(params, from_=0, to=1000, textvariable=self.disk_var, width=5)
         self.disk_spin.pack(side="left")
 
-        self.gray_deadline_var = tk.BooleanVar(value=True)  # True por padrão se quiser ativo
+        self.gray_deadline_var = tk.BooleanVar(value=True) 
         ttk.Checkbutton(params, text="Cinza depois da deadline", variable=self.gray_deadline_var).pack(side="right", padx=(10,4))
 
         ttk.Button(top, text="Executar", command=self.run_simulation).pack(side="left", padx=10)
 
-        # area do grafico e resultados
         self.graph_frame = ttk.Frame(self)
         self.graph_frame.pack(fill="both", expand=True, padx=10, pady=(0,6))
 
-        # frame para resultados
         self.results_container = None
         self.canvas_widget = None
 
@@ -213,7 +205,6 @@ class SimulatorGUI(tk.Tk):
             messagebox.showerror("Erro", "Valores numéricos inválidos.")
             return
 
-        # VALIDAÇÃO DE ENTRADA (MÍNIMO 1)
         if quantum < 1 or overheat < 1:
             messagebox.showerror("Erro", "Quantum e Overheat devem ser no mínimo 1.")
             return
@@ -238,7 +229,6 @@ class SimulatorGUI(tk.Tk):
 
         executor.execute()
 
-        # monta grafico de gantt
         fig = build_gantt(executor,gray_after_deadline=self.gray_deadline_var.get())
 
         if self.canvas_widget:
@@ -266,7 +256,6 @@ class SimulatorGUI(tk.Tk):
             turnaround = termino - p.arrival
             espera = turnaround - getattr(p, "total_time", p.remaining_time if hasattr(p, "remaining_time") else 0)
 
-            # Verifica deadline usando o tempo absoluto calculado no model
             if p.absolute_deadline is None:
                 d_ok = True
             else:
@@ -279,7 +268,7 @@ class SimulatorGUI(tk.Tk):
                 "id": p.id,
                 "chegada": p.arrival,
                 "execucao": getattr(p, "total_time", None),
-                "deadline": p.absolute_deadline, # Exibe o deadline absoluto
+                "deadline": p.absolute_deadline, 
                 "prioridade": getattr(p, "priority", None),
                 "inicios": starts,
                 "termino": termino,
@@ -297,7 +286,7 @@ class SimulatorGUI(tk.Tk):
                 "avg_turnaround": 0,
                 "throughput": 0,
                 "idle_percent": 0,
-                "total_context_switches": getattr(executor, "context_switches", 0),
+                "total_context_switches": 0,
                 "total_time": getattr(executor, "actual_time", 0),
                 "finished_count": 0
             }
@@ -310,7 +299,9 @@ class SimulatorGUI(tk.Tk):
         total_time = max(getattr(executor, "actual_time", 0), max(r["termino"] for r in rows))
         throughput = n / total_time if total_time > 0 else 0
         idle_percent = (getattr(executor, "idle_cpu", 0) / total_time) * 100 if total_time > 0 else 0
-        ctx_switches = getattr(executor, "context_switches", 0)
+        
+        overloads = getattr(executor, "overload_count", 0)
+        ctx_switches = (overloads + n - 1) if n > 0 else 0
 
         return {
             "avg_wait": avg_wait,
@@ -327,7 +318,26 @@ class SimulatorGUI(tk.Tk):
             self.results_container.destroy()
 
         self.results_container = ttk.Frame(self)
-        self.results_container.pack(fill="x", padx=10, pady=(4,10))
+        self.results_container.pack(fill="both", expand=True, padx=10, pady=(4,10))
+
+        right_container = ttk.Frame(self.results_container)
+        right_container.pack(side="right", fill="y", padx=(10, 0))
+
+        canvas = tk.Canvas(right_container, width=280, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(right_container, orient="vertical", command=canvas.yview)
+        
+        stats_frame = ttk.Frame(canvas)
+
+        stats_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=stats_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
 
         cols = ("id", "chegada", "execucao", "deadline", "prioridade", "inicios", "termino", "espera", "turnaround", "deadline_ok")
         tree = ttk.Treeview(self.results_container, columns=cols, show="headings", height=7)
@@ -335,12 +345,11 @@ class SimulatorGUI(tk.Tk):
             tree.heading(c, text=c)
             tree.column(c, anchor="center", width=90 if c != "inicios" else 160)
 
-        tree.pack(side="left", fill="x", expand=True, padx=(0,10))
+        tree.pack(side="left", fill="both", expand=True)
 
         rows = self._reconstruct_results(executor)
         summary = self._compute_summary(executor, rows)
 
-        # Preenche tabela
         for r in rows:
             starts_str = ",".join(str(int(s)) for s in r["inicios"]) if r["inicios"] else ""
             deadline_val = r["deadline"] if r["deadline"] is not None else ""
@@ -349,13 +358,10 @@ class SimulatorGUI(tk.Tk):
                 starts_str, r["termino"], r["espera"], r["turnaround"], "OK" if r["deadline_ok"] else "ESTOUROU"
             ))
 
-        stats_frame = ttk.Frame(self.results_container)
-        stats_frame.pack(side="left", fill="y")
-
-        ttk.Label(stats_frame, text="Resumo Quantitativo", font=("TkDefaultFont", 10, "bold")).pack(anchor="w")
+        ttk.Label(stats_frame, text="Resumo Quantitativo", font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=(0, 5))
         ttk.Label(stats_frame, text=f"Média espera: {summary['avg_wait']:.2f} u.t.").pack(anchor="w")
         ttk.Label(stats_frame, text=f"Média turnaround: {summary['avg_turnaround']:.2f} u.t.").pack(anchor="w")
-        ttk.Label(stats_frame, text=f"Throughput: {summary['throughput']:.3f} processos/u.t.").pack(anchor="w")
+        ttk.Label(stats_frame, text=f"Throughput: {summary['throughput']:.3f} proc/u.t.").pack(anchor="w")
         ttk.Label(stats_frame, text=f"% CPU ociosa: {summary['idle_percent']:.2f}%").pack(anchor="w")
         ttk.Label(stats_frame, text=f"Total trocas de contexto: {summary['total_context_switches']}").pack(anchor="w")
         ttk.Label(stats_frame, text=f"Tempo total simulado: {summary['total_time']:.2f} u.t.").pack(anchor="w")

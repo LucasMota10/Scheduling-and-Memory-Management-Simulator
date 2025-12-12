@@ -44,6 +44,7 @@ class Algorithms(ABC):
         self.finished_process = []
         self.actual_time = 0
         self.idle_cpu = 0
+        self.overload_count = 0
         
     @abstractmethod
     def execute(self):
@@ -67,7 +68,6 @@ class Fifo(Algorithms):
             if wait_duration > 0:
                 process.time_line.append(TimeLine(wait_duration, "waiting"))
 
-            start_time = self.actual_time
             self.actual_time += process.remaining_time 
             
             process.time_line.append(TimeLine(process.remaining_time, "executing"))
@@ -180,6 +180,7 @@ class Round_Robin(Algorithms):
                 process.wait_time = process.turnaround_time - process.total_time
                 self.finished_process.append(process)
             else:
+                self.overload_count += 1
                 process.state = 'pronto'
                 if self.overheat > 0:
                     self.actual_time += self.overheat
@@ -246,6 +247,7 @@ class EDF(Algorithms):
                 process.wait_time = process.turnaround_time - process.total_time
                 self.finished_process.append(process)
             else:
+                self.overload_count += 1
                 process.state = 'pronto'
                 if self.overheat > 0:
                     self.actual_time += self.overheat
@@ -319,6 +321,7 @@ class CFS_Sim(Algorithms):
                 process.wait_time = process.turnaround_time - process.total_time
                 self.finished_process.append(process)
             else:
+                self.overload_count += 1
                 process.state = 'pronto'
                 if self.overheat > 0:
                     self.actual_time += self.overheat
